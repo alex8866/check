@@ -1,4 +1,4 @@
-#!/bin/bash - 
+bin/bash - 
 
 ########################################################################
 # Copyright (c) Alex, 2013; All Rights Reserved                        #
@@ -22,6 +22,22 @@ swatch()
 
 #trap signal 1 2 3 15
 #trap 'kill -9 $BG_PID;echo;exit 2' 1 2 3 15
+usage()
+{
+    cat << EOF
+Usage $0 OPTION
+Check system information
+
+OPTIONS:
+    -h Print this help message
+    system, Check information related to system
+    xen, Check infomation related to xen
+    libguestfs, Check information related to libguestfs
+
+
+Reprot bugs to <lkong@redhat.com>.
+EOF
+}
 
 function trap_exit
 {
@@ -135,6 +151,9 @@ deal()
 [ "$2" == "" ] && {
 OUTPUT_NAME="$OUTPUT_NAME
 $1"
+
+#eval "$3"="${BOLD}${TPUT_RED}${B_LINK}1123132 ${NORMAL}${BOLD}${TPUT_RED}N/A"
+eval "$3"='"\033[1m\033[31m\033[5m* \033[0m\033[1m\033[31mN/A\033[0m"'
 return 0
     }
 
@@ -165,7 +184,7 @@ return 0
                }       
               }'      
     )"
-
+    [ "${TMP_VAL}" == "" ] && TMP_VAL=" "
     eval "$3"='$TMP_VAL'
 
     OUTPUT_NAME="$OUTPUT_NAME
@@ -178,9 +197,9 @@ xy()
 {
 	_R=$1 #row
 	_C=$2 #column
-	_TEXT=$3
+	_TEXT="$3"
 	tput cup $_R $_C
-	echo -n $_TEXT
+	echo -en "$_TEXT"
 } 
 
 center() 
@@ -789,7 +808,7 @@ printf "\n"
 }
 
 
-libguestfs()
+guestfs()
 {
 #Program start
 OUTPUT_NAME=""
@@ -805,11 +824,35 @@ TPUTTOTAL=1
 TPUTEVEL=$(echo "($P_COL - 20)/ $TPUTTOTAL" | bc)
 
 #get system information
-Xen_Version=$(rpm -qa|grep ^xen-[0-9])
-deal "Xen Version"
-if [[ "${Xen_Version}" != "${Xen_version}" ]];then
-    Xen_Version="${OUT_PUT_ERROR}${Xen_Version}${NORMAL}"
-fi
+Libguestfs_Version=$(rpm -qa|grep libguestfs-[0-9])
+deal "Libguestfs Version" "$Libguestfs_Version" "Libguestfs_Version"
+
+Libguestfs_Tools_Version=$(rpm -qa|grep libguestfs-tools-[0-9])
+deal "Libguestfs Tools Version" "$Libguestfs_Tools_Version" "Libguestfs_Tools_Version"
+
+Libguestfs_Tools_C_Version=$(rpm -qa|grep libguestfs-tools-c-[0-9])
+deal "Libguestfs Tools C Version" "$Libguestfs_Tools_C_Version" "Libguestfs_Tools_C_Version"
+
+Perl_Sys_Guestfs_Version=$(rpm -qa|grep perl-Sys-Guestfs-[0-9])
+deal "Perl Sys Guestfs Version" "$Perl_Sys_Guestfs_Version" "Perl_Sys_Guestfs_Version"
+
+Supermin_Version=$(rpm -qa|grep supermin-[0-9])
+deal "Supermin Version" "$Supermin_Version" "Supermin_Version"
+
+Augeas_Version=$(rpm -qa|grep augeas-[0-9])
+deal "Augeas Version" "$Augeas_Version" "Augeas_Version"
+
+Hivex_Version=$(rpm -qa|grep ^hivex-[0-9])
+deal "Hivex Version" "$Hivex_Version" "Hivex_Version"
+
+Libguestfs_Winsupport_Version=$(rpm -qa|grep libguestfs-winsupport-[0-9])
+deal "Libguestfs Winsupport Version" "$Libguestfs_Winsupport_Version" "Libguestfs_Winsupport_Version"
+
+qemu_kvm_Version=$(rpm -qa|grep qemu-kvm-[0-9])
+deal "qemu-kvm Version" "$qemu_kvm_Version" "qemu_kvm_Version"
+
+libvirt_Version=$(rpm -qa|grep libvirt-[0-9])
+deal "libvirt Version" "$libvirt_Version" "libvirt_Version"
 
 #echo -n " [100%]"
 
@@ -818,7 +861,16 @@ fi
 eval ${CURSOR_ON}
 
 #Value
-OUTPUT_VAR="${Xen_Version}"
+OUTPUT_VAR="${Libguestfs_Version}
+${Libguestfs_Tools_Version}
+${Libguestfs_Tools_C_Version}
+${Perl_Sys_Guestfs_Version}
+${Supermin_Version}
+${Augeas_Version}
+${Hivex_Version}
+${Libguestfs_Winsupport_Version}
+${qemu_kvm_Version}
+${libvirt_Version}"
 
 #create table
 tput clear
@@ -907,6 +959,13 @@ for ((i=2;i<${HOLD_C} + 2;i++));do
 	printf "%s" -
 done
 printf "\n"
+}
+
+
+#script start
+[ "$1" == "-h" ] && {
+usage
+exit 0
 }
 
 com=("$*")
